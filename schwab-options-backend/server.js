@@ -148,17 +148,19 @@ process.on('SIGINT', () => {
   });
 });
 
-// Start server
-const server = app.listen(PORT, () => {
-  logger.info(`🚀 Schwab Options Backend Server running on port ${PORT}`);
-  logger.info(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-  logger.info(`🔒 CORS enabled for: ${process.env.CORS_ORIGIN || 'http://localhost:3000'}`);
-  logger.info(`🔍 Health check: http://localhost:${PORT}/health`);
-  
-  if (process.env.NODE_ENV === 'development') {
-    logger.info(`🔧 API Base URL: http://localhost:${PORT}/api`);
-    logger.info(`🔐 Auth URL: http://localhost:${PORT}/api/auth/initiate`);
-  }
-});
+// Start server only in development
+if (process.env.NODE_ENV !== 'production') {
+  const server = app.listen(PORT, () => {
+    logger.info(`🚀 Schwab Options Backend Server running on port ${PORT}`);
+    logger.info(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+    logger.info(`🔒 CORS enabled for: ${process.env.CORS_ORIGIN || 'http://localhost:3000'}`);
+    logger.info(`🔍 Health check: http://localhost:${PORT}/health`);
+    
+    if (process.env.NODE_ENV === 'development') {
+      logger.info(`🔧 API Base URL: http://localhost:${PORT}/api`);
+      logger.info(`🔐 Auth URL: http://localhost:${PORT}/api/auth/initiate`);
+    }
+  });
+}
 
 module.exports = app;
