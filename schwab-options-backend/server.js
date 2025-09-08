@@ -1,59 +1,20 @@
-// server.js - Main Express server for Schwab API integration
-require('dotenv').config();
+// server.js - Minimal working version for Vercel
 const express = require('express');
 const cors = require('cors');
-const helmet = require('helmet');
-const morgan = require('morgan');
-const compression = require('compression');
-const path = require('path');
-
-// Import routes
-const authRoutes = require('./src/routes/auth');
-const accountRoutes = require('./src/routes/accounts');
-const marketRoutes = require('./src/routes/market');
-
-// Import middleware
-const rateLimiter = require('./src/middleware/rateLimiter');
-const logger = require('./src/utils/logger');
 
 const app = express();
-const PORT = process.env.PORT || 3001;
 
-// Security middleware
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      connectSrc: ["'self'", "https://api.schwabapi.com"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-    },
-  },
-}));
-
-// CORS configuration
-const corsOptions = {
-  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3000'],
-  credentials: true,
-  optionsSuccessStatus: 200,
+// Basic CORS setup
+app.use(cors({
+  origin: [
+    'http://localhost:3000',
+    'https://options-scanner-nu.vercel.app'
+  ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-};
+}));
 
-app.use(cors(corsOptions));
-app.use(compression());
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// Logging
-if (process.env.NODE_ENV !== 'test') {
-  app.use(morgan('combined', {
-    stream: { write: message => logger.info(message.trim()) }
-  }));
-}
-
-// Rate limiting
-app.use('/api/', rateLimiter);
+app.use(express.json());
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -65,102 +26,38 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Serve auth callback page
-app.get('/auth/callback', (req, res) => {
-  res.sendFile(path.join(__dirname, 'auth-callback.html'));
+// Basic API routes (placeholders)
+app.get('/api/accounts', (req, res) => {
+  res.json([]);
 });
 
-// API routes
-app.use('/api/auth', authRoutes);
-app.use('/api/accounts', accountRoutes);
-app.use('/api', marketRoutes);
+app.get('/api/accounts/:accountNumber/positions', (req, res) => {
+  res.json([]);
+});
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  logger.error('Unhandled error:', err);
-  
-  if (err.name === 'ValidationError') {
-    return res.status(400).json({
-      error: 'Validation Error',
-      message: err.message,
-      details: err.details || null
-    });
-  }
-  
-  if (err.name === 'UnauthorizedError') {
-    return res.status(401).json({
-      error: 'Unauthorized',
-      message: 'Invalid or expired authentication'
-    });
-  }
-  
-  if (err.code === 'RATE_LIMIT_EXCEEDED') {
-    return res.status(429).json({
-      error: 'Rate Limit Exceeded',
-      message: 'Too many requests. Please try again later.',
-      retryAfter: err.retryAfter || 60
-    });
-  }
-  
-  // Don't leak error details in production
-  const message = process.env.NODE_ENV === 'production' 
-    ? 'Internal server error' 
-    : err.message;
-    
-  res.status(500).json({
-    error: 'Internal Server Error',
-    message: message,
-    ...(process.env.NODE_ENV !== 'production' && { stack: err.stack })
-  });
+app.get('/api/quotes/:symbols', (req, res) => {
+  res.json({ message: 'Quotes endpoint not implemented yet' });
+});
+
+app.get('/api/options/:symbol', (req, res) => {
+  res.json({ message: 'Options endpoint not implemented yet' });
 });
 
 // 404 handler
 app.use('*', (req, res) => {
   res.status(404).json({
     error: 'Not Found',
-    message: `Route ${req.originalUrl} not found`,
-    availableRoutes: [
-      'GET /health',
-      'GET /auth/callback',
-      'GET /api/auth/initiate',
-      'POST /api/auth/callback',
-      'GET /api/accounts',
-      'GET /api/quotes/:symbols',
-      'GET /api/options/:symbol'
-    ]
+    message: `Route ${req.originalUrl} not found`
   });
 });
 
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  logger.info('SIGTERM received. Shutting down gracefully...');
-  server.close(() => {
-    logger.info('Process terminated');
-    process.exit(0);
+// Error handler
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  res.status(500).json({
+    error: 'Internal Server Error',
+    message: err.message
   });
 });
-
-process.on('SIGINT', () => {
-  logger.info('SIGINT received. Shutting down gracefully...');
-  server.close(() => {
-    logger.info('Process terminated');
-    process.exit(0);
-  });
-});
-
-// Start server only in development
-if (process.env.NODE_ENV !== 'production') {
-  const server = app.listen(PORT, () => {
-    logger.info(`🚀 Schwab Options Backend Server running on port ${PORT}`);
-    logger.info(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-    logger.info(`🔒 CORS enabled for: ${process.env.CORS_ORIGIN || 'http://localhost:3000'}`);
-    logger.info(`🔍 Health check: http://localhost:${PORT}/health`);
-    
-    if (process.env.NODE_ENV === 'development') {
-      logger.info(`🔧 API Base URL: http://localhost:${PORT}/api`);
-      logger.info(`🔐 Auth URL: http://localhost:${PORT}/api/auth/initiate`);
-    }
-  });
-}
 
 module.exports = app;
