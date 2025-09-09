@@ -1,144 +1,80 @@
-// server.js - Enhanced debugging version for CORS troubleshooting
+// server.js - Clean, minimal version with working CORS
 const express = require('express');
 const cors = require('cors');
 
 const app = express();
 
-// Enhanced CORS setup with comprehensive debugging
+// Simple but effective CORS configuration
 app.use(cors({
   origin: function (origin, callback) {
-    console.log(`=== CORS Origin Check ===`);
-    console.log(`Incoming request from origin: ${origin}`);
-    console.log(`Request timestamp: ${new Date().toISOString()}`);
+    // Log every CORS check for debugging
+    console.log('CORS check for origin:', origin);
     
-    // Allow requests with no origin
+    // Allow requests with no origin (server-to-server)
     if (!origin) {
-      console.log('No origin header - allowing (likely server-to-server)');
+      console.log('No origin - allowing');
       return callback(null, true);
     }
-
-    // Define and test each pattern individually for clear debugging
-    const patterns = [
-      {
-        name: 'Local Development',
-        pattern: 'http://localhost:3000',
-        test: (origin) => origin === 'http://localhost:3000'
-      },
-      {
-        name: 'Options Scanner Any Deployment',
-        pattern: '/^https:\\/\\/options-scanner.*\\.vercel\\.app$/',
-        test: (origin) => /^https:\/\/options-scanner.*\.vercel\.app$/.test(origin)
-      },
-      {
-        name: 'Team Domain Pattern',
-        pattern: '/^https:\\/\\/.*alexanders-projects-be738dc7\\.vercel\\.app$/',
-        test: (origin) => /^https:\/\/.*alexanders-projects-be738dc7\.vercel\.app$/.test(origin)
-      },
-      {
-        name: 'Original Frontend URL',
-        pattern: 'https://options-scanner-nu.vercel.app',
-        test: (origin) => origin === 'https://options-scanner-nu.vercel.app'
-      }
-    ];
     
-    console.log('Testing against patterns:');
-    let matchFound = false;
-    
-    patterns.forEach(patternObj => {
-      const matches = patternObj.test(origin);
-      console.log(`  ${patternObj.name} (${patternObj.pattern}): ${matches ? 'MATCH' : 'NO MATCH'}`);
-      if (matches) matchFound = true;
-    });
-    
-    if (matchFound) {
-      console.log(`✅ CORS: Origin ${origin} ALLOWED`);
-      console.log(`=== End CORS Check ===\n`);
+    // Allow any Vercel app URL for your projects
+    if (origin.includes('alexanders-projects-be738dc7.vercel.app')) {
+      console.log('Vercel project origin - allowing');
       return callback(null, true);
-    } else {
-      console.log(`❌ CORS: Origin ${origin} REJECTED`);
-      console.log(`=== End CORS Check ===\n`);
-      return callback(new Error(`CORS policy rejected origin: ${origin}`));
     }
+    
+    // Allow localhost for development
+    if (origin.includes('localhost')) {
+      console.log('Localhost origin - allowing');
+      return callback(null, true);
+    }
+    
+    console.log('Origin not allowed:', origin);
+    return callback(new Error('Not allowed by CORS'));
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
 }));
 
 app.use(express.json());
 
-// Diagnostic endpoint to test CORS patterns manually
-app.get('/test-cors/:testOrigin(*)', (req, res) => {
-  const testOrigin = decodeURIComponent(req.params.testOrigin);
-  
-  const patterns = [
-    {
-      name: 'Options Scanner Pattern',
-      regex: /^https:\/\/options-scanner.*\.vercel\.app$/,
-      matches: /^https:\/\/options-scanner.*\.vercel\.app$/.test(testOrigin)
-    },
-    {
-      name: 'Team Domain Pattern', 
-      regex: /^https:\/\/.*alexanders-projects-be738dc7\.vercel\.app$/,
-      matches: /^https:\/\/.*alexanders-projects-be738dc7\.vercel\.app$/.test(testOrigin)
-    }
-  ];
-  
-  res.json({
-    testOrigin,
-    patterns: patterns,
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Health check endpoint
+// Health endpoint with clear deployment tracking
 app.get('/health', (req, res) => {
-  res.status(200).json({
+  console.log('Health check requested');
+  res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    environment: process.env.NODE_ENV || 'development',
-    corsVersion: 'enhanced-debugging-v1'
+    deployment: 'clean-v3',
+    message: 'Backend is working with simplified CORS'
   });
 });
 
-// Basic API routes (placeholders)
+// Placeholder API endpoints
 app.get('/api/accounts', (req, res) => {
+  console.log('Accounts endpoint called');
   res.json([]);
 });
 
 app.get('/api/accounts/:accountNumber/positions', (req, res) => {
+  console.log('Positions endpoint called for account:', req.params.accountNumber);
   res.json([]);
 });
 
 app.get('/api/quotes/:symbols', (req, res) => {
-  res.json({ message: 'Quotes endpoint not implemented yet' });
+  console.log('Quotes endpoint called for symbols:', req.params.symbols);
+  res.json({ message: 'Quotes endpoint placeholder' });
 });
 
 app.get('/api/options/:symbol', (req, res) => {
-  res.json({ message: 'Options endpoint not implemented yet' });
+  console.log('Options endpoint called for symbol:', req.params.symbol);
+  res.json({ message: 'Options endpoint placeholder' });
 });
 
 // 404 handler
 app.use('*', (req, res) => {
+  console.log('404 request to:', req.originalUrl);
   res.status(404).json({
     error: 'Not Found',
-    message: `Route ${req.originalUrl} not found`,
-    availableRoutes: [
-      'GET /health',
-      'GET /test-cors/:testOrigin',
-      'GET /api/accounts',
-      'GET /api/quotes/:symbols',
-      'GET /api/options/:symbol'
-    ]
-  });
-});
-
-// Error handler
-app.use((err, req, res, next) => {
-  console.error('Error:', err);
-  res.status(500).json({
-    error: 'Internal Server Error',
-    message: err.message
+    message: `Route ${req.originalUrl} not found`
   });
 });
 
