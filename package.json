@@ -4,7 +4,7 @@
   "description": "Unified Schwab Options Scanner - Full Stack Application",
   "scripts": {
     "start": "concurrently \"cd schwab-options-backend && npm start\" \"cd options-scanner && npm start\"",
-    "start-live": "cd schwab-options-backend && npm run start-live",
+    "start-live": "cd schwab-options-backend && node server-live.js",
     "dev": "concurrently \"cd schwab-options-backend && npm run dev\" \"cd options-scanner && npm start\"",
     "build": "cd options-scanner && npm run build",
     "install-all": "cd schwab-options-backend && npm install && cd ../options-scanner && npm install",
