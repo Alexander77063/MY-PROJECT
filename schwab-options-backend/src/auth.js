@@ -27,7 +27,7 @@ class SchwabAuth {
             response_type: 'code',
             client_id: this.clientId,
             redirect_uri: this.redirectUri,
-            scope: 'api',
+            scope: 'readonly',
             state: state,
             code_challenge: codeChallenge,
             code_challenge_method: 'S256'
