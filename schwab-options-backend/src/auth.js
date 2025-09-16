@@ -21,22 +21,18 @@ class SchwabAuth {
     // Generate OAuth authorization URL
     getAuthUrl() {
         const state = crypto.randomBytes(32).toString('hex');
-        const codeChallenge = this.generateCodeChallenge();
         
         const params = new URLSearchParams({
             response_type: 'code',
             client_id: this.clientId,
             redirect_uri: this.redirectUri,
             scope: 'readonly',
-            state: state,
-            code_challenge: codeChallenge,
-            code_challenge_method: 'S256'
+            state: state
         });
 
         return {
             authUrl: `${this.authUrl}?${params.toString()}`,
-            state,
-            codeChallenge
+            state
         };
     }
 
@@ -67,8 +63,7 @@ class SchwabAuth {
                 body: new URLSearchParams({
                     grant_type: 'authorization_code',
                     code: authorizationCode,
-                    redirect_uri: this.redirectUri,
-                    code_verifier: this.codeVerifier
+                    redirect_uri: this.redirectUri
                 })
             });
 
