@@ -1,0 +1,27 @@
+{
+  "name": "schwab-options-scanner-monorepo",
+  "version": "1.0.0",
+  "description": "Unified Schwab Options Scanner - Full Stack Application",
+  "scripts": {
+    "start": "concurrently \"cd schwab-options-backend && npm start\" \"cd options-scanner && npm start\"",
+    "start-live": "cd schwab-options-backend && npm run start-live",
+    "dev": "concurrently \"cd schwab-options-backend && npm run dev\" \"cd options-scanner && npm start\"",
+    "build": "cd options-scanner && npm run build",
+    "install-all": "cd schwab-options-backend && npm install && cd ../options-scanner && npm install",
+    "clean": "cd schwab-options-backend && rm -rf node_modules && cd ../options-scanner && rm -rf node_modules",
+    "health-check": "curl http://localhost:3001/health"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "keywords": [
+    "schwab",
+    "options",
+    "scanner",
+    "trading",
+    "react",
+    "node"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}
