@@ -17,7 +17,7 @@ class SchwabDualAuth {
             accessToken: null,
             refreshToken: null,
             tokenExpiry: null,
-            scope: 'readonly'
+            scope: 'api'
         };
         
         // Accounts & Trading API credentials (using your actual app)
@@ -27,7 +27,7 @@ class SchwabDualAuth {
             accessToken: null,
             refreshToken: null,
             tokenExpiry: null,
-            scope: 'readonly'
+            scope: 'api'
         };
     }
 
