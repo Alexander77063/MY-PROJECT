@@ -190,6 +190,35 @@ app.post('/auth/logout', (req, res) => {
   }
 });
 
+// Manual token exchange endpoint (workaround for OAuth redirect issues)
+app.post('/auth/manual-exchange', async (req, res) => {
+  try {
+    const { code, service } = req.body;
+    
+    if (!code) {
+      return res.status(400).json({ error: 'Authorization code required' });
+    }
+    
+    const serviceToUse = service || 'marketData';
+    
+    console.log(`🔄 Manual token exchange for ${serviceToUse} service...`);
+    console.log('Authorization code:', code);
+    
+    const result = await schwabAuth.exchangeCodeForToken(code, serviceToUse);
+    console.log(`✅ Manual token exchange successful for ${serviceToUse}`);
+    
+    res.json({
+      success: true,
+      service: result.service,
+      message: `Successfully authenticated with Charles Schwab ${serviceToUse} API via manual exchange`,
+      expiresIn: result.tokenData.expires_in
+    });
+  } catch (error) {
+    console.error('❌ Manual token exchange error:', error);
+    res.status(400).json({ error: 'Manual token exchange failed', details: error.message });
+  }
+});
+
 // Account endpoints (require authentication)
 app.get('/api/accounts', async (req, res) => {
   try {
