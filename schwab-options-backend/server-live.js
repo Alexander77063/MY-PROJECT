@@ -2,10 +2,10 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const SchwabApiClient = require('./src/schwabClient');
+const SchwabDualAuth = require('./src/dualAuth');
 
 const app = express();
-const schwabClient = new SchwabApiClient();
+const schwabAuth = new SchwabDualAuth();
 
 // CORS configuration for live trading
 app.use(cors({
@@ -42,28 +42,57 @@ app.use(express.json());
 // Health check endpoint
 app.get('/health', (req, res) => {
   console.log('Health check requested');
+  const authStatus = schwabAuth.getAuthStatus();
   res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
     deployment: 'live-trading-v1',
     message: 'Live trading server running',
-    authenticated: schwabClient.isAuthenticated()
+    authentication: {
+      marketData: authStatus.marketData.authenticated,
+      trading: authStatus.trading.authenticated
+    }
   });
 });
 
 // Authentication endpoints
-app.get('/auth/login', (req, res) => {
+app.get('/auth/login/:service', (req, res) => {
   try {
-    console.log('🔐 Initiating Schwab OAuth login...');
-    const { authUrl, state, codeChallenge } = schwabClient.getAuthUrl();
+    const { service } = req.params;
+    if (!['marketData', 'trading'].includes(service)) {
+      return res.status(400).json({ error: 'Invalid service. Use marketData or trading' });
+    }
     
-    // In production, store state and codeChallenge securely
-    console.log('Generated auth URL:', authUrl);
+    console.log(`🔐 Initiating Schwab OAuth login for ${service}...`);
+    const { authUrl, state } = schwabAuth.getAuthUrl(service);
+    
+    console.log(`Generated ${service} auth URL:`, authUrl);
     
     res.json({
       authUrl,
       state,
-      message: 'Redirect user to authUrl for Schwab authentication'
+      service,
+      message: `Redirect user to authUrl for Schwab ${service} authentication`
+    });
+  } catch (error) {
+    console.error('❌ Auth login error:', error);
+    res.status(500).json({ error: 'Failed to generate auth URL', details: error.message });
+  }
+});
+
+// Backward compatibility - default to market data
+app.get('/auth/login', (req, res) => {
+  try {
+    console.log('🔐 Initiating Schwab OAuth login for marketData (default)...');
+    const { authUrl, state } = schwabAuth.getAuthUrl('marketData');
+    
+    console.log('Generated marketData auth URL:', authUrl);
+    
+    res.json({
+      authUrl,
+      state,
+      service: 'marketData',
+      message: 'Redirect user to authUrl for Schwab marketData authentication'
     });
   } catch (error) {
     console.error('❌ Auth login error:', error);
@@ -81,13 +110,25 @@ app.get('/auth/callback', async (req, res) => {
       return res.status(400).json({ error: 'Authorization code required' });
     }
 
-    const tokenData = await schwabClient.handleAuthCallback(code);
-    console.log('✅ Successfully authenticated with Schwab');
+    if (!state) {
+      return res.status(400).json({ error: 'State parameter required' });
+    }
+
+    // Extract service from state (format: "service_randomstring")
+    const [service] = state.split('_');
+    if (!['marketData', 'trading'].includes(service)) {
+      return res.status(400).json({ error: 'Invalid service in state parameter' });
+    }
+
+    console.log(`🔄 Processing ${service} authentication...`);
+    const result = await schwabAuth.exchangeCodeForToken(code, service);
+    console.log(`✅ Successfully authenticated with Schwab ${service} API`);
     
     res.json({
       success: true,
-      message: 'Successfully authenticated with Charles Schwab',
-      expiresIn: tokenData.expires_in
+      service: result.service,
+      message: `Successfully authenticated with Charles Schwab ${service} API`,
+      expiresIn: result.tokenData.expires_in
     });
   } catch (error) {
     console.error('❌ OAuth callback error:', error);
@@ -119,23 +160,34 @@ app.post('/auth/callback', async (req, res) => {
 });
 
 app.get('/auth/status', (req, res) => {
-  const authenticated = schwabClient.isAuthenticated();
-  console.log('Auth status check:', authenticated ? 'authenticated' : 'not authenticated');
+  const authStatus = schwabAuth.getAuthStatus();
+  console.log('Auth status check:', authStatus);
   
   res.json({
-    authenticated,
+    marketData: authStatus.marketData,
+    trading: authStatus.trading,
     timestamp: new Date().toISOString()
   });
 });
 
 app.post('/auth/logout', (req, res) => {
-  schwabClient.logout();
-  console.log('🔓 User logged out');
+  const { service } = req.body;
   
-  res.json({
-    success: true,
-    message: 'Successfully logged out'
-  });
+  if (service && ['marketData', 'trading'].includes(service)) {
+    schwabAuth.logout(service);
+    console.log(`🔓 User logged out of ${service}`);
+    res.json({
+      success: true,
+      message: `Successfully logged out of ${service}`
+    });
+  } else {
+    schwabAuth.logoutAll();
+    console.log('🔓 User logged out of all services');
+    res.json({
+      success: true,
+      message: 'Successfully logged out of all services'
+    });
+  }
 });
 
 // Account endpoints (require authentication)
