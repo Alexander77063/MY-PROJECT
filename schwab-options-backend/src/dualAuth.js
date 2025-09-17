@@ -10,9 +10,9 @@ class SchwabDualAuth {
         this.authUrl = `${this.baseUrl}/v1/oauth/authorize`;
         this.redirectUri = process.env.SCHWAB_CALLBACK_URL;
         
-        // Market Data API credentials
+        // Market Data API credentials (using your actual app)
         this.marketData = {
-            clientId: 'fnB6k1X6JSFlQHravRt6T9m86AZlkD04',
+            clientId: '1SeWofRJEAbegPc5K67DK3SVOWGKVxZNG2HMJKQgm69ohBNO',
             clientSecret: process.env.SCHWAB_APP_SECRET,
             accessToken: null,
             refreshToken: null,
@@ -20,7 +20,7 @@ class SchwabDualAuth {
             scope: 'readonly'
         };
         
-        // Accounts & Trading API credentials  
+        // Accounts & Trading API credentials (using your actual app)
         this.trading = {
             clientId: '1SeWofRJEAbegPc5K67DK3SVOWGKVxZNG2HMJKQgm69ohBNO',
             clientSecret: process.env.SCHWAB_APP_SECRET,
