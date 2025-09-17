@@ -110,15 +110,8 @@ app.get('/auth/callback', async (req, res) => {
       return res.status(400).json({ error: 'Authorization code required' });
     }
 
-    if (!state) {
-      return res.status(400).json({ error: 'State parameter required' });
-    }
-
-    // Extract service from state (format: "service_randomstring")
-    const [service] = state.split('_');
-    if (!['marketData', 'trading'].includes(service)) {
-      return res.status(400).json({ error: 'Invalid service in state parameter' });
-    }
+    // Default to marketData service (simplified OAuth per Schwab support)
+    const service = 'marketData';
 
     console.log(`🔄 Processing ${service} authentication...`);
     const result = await schwabAuth.exchangeCodeForToken(code, service);

@@ -31,23 +31,19 @@ class SchwabDualAuth {
         };
     }
 
-    // Generate OAuth URL for specific service
+    // Generate OAuth URL for specific service (simplified per Schwab support)
     getAuthUrl(service = 'marketData') {
-        const state = crypto.randomBytes(32).toString('hex');
         const config = service === 'marketData' ? this.marketData : this.trading;
         
         const params = new URLSearchParams({
-            response_type: 'code',
             client_id: config.clientId,
-            redirect_uri: this.redirectUri,
-            scope: config.scope,
-            state: `${service}_${state}`
+            redirect_uri: this.redirectUri
         });
 
         return {
             authUrl: `${this.authUrl}?${params.toString()}`,
-            state: `${service}_${state}`,
-            service: service
+            service: service,
+            message: 'Simplified OAuth URL per Schwab support - removed extra parameters'
         };
     }
 
