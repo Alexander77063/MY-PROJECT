@@ -3,9 +3,11 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const SchwabDualAuth = require('./src/dualAuth');
+const SchwabApiClient = require('./src/apiClient');
 
 const app = express();
 const schwabAuth = new SchwabDualAuth();
+const schwabClient = new SchwabApiClient(schwabAuth);
 
 // CORS configuration for live trading
 app.use(cors({
@@ -265,8 +267,8 @@ app.get('/api/accounts/:accountNumber/positions', async (req, res) => {
 // Market data endpoints
 app.get('/api/quotes/:symbols', async (req, res) => {
   try {
-    if (!schwabClient.isAuthenticated()) {
-      return res.status(401).json({ error: 'Not authenticated. Please login first.' });
+    if (!schwabClient.isAuthenticated('marketData')) {
+      return res.status(401).json({ error: 'Market Data API not authenticated. Please login first.', loginUrl: '/auth/login' });
     }
 
     const { symbols } = req.params;
