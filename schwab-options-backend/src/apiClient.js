@@ -72,8 +72,8 @@ class SchwabApiClient {
     async getQuotes(symbols) {
         try {
             const symbolList = Array.isArray(symbols) ? symbols.join(',') : symbols;
-            // Use correct Schwab API endpoint format
-            const response = await this.makeRequest(`/marketdata/v1/quotes?symbols=${symbolList}`, 'marketData');
+            // Try different parameter format - some APIs use 'symbol' instead of 'symbols'
+            const response = await this.makeRequest(`/marketdata/v1/quotes?symbol=${symbolList}`, 'marketData');
             return response;
         } catch (error) {
             console.error(`Failed to get quotes for ${symbols}:`, error);
