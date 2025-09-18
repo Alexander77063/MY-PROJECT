@@ -10,7 +10,10 @@ class SchwabApiClient {
     async makeRequest(endpoint, service = 'marketData', options = {}) {
         try {
             const headers = await this.auth.getAuthHeaders(service);
-            const url = `${this.baseUrl}/${this.apiVersion}${endpoint}`;
+            // Build URL - endpoint should include version if needed
+            const url = endpoint.startsWith('http') ? endpoint : `${this.baseUrl}${endpoint}`;
+            
+            console.log(`Making API request to: ${url}`);
             
             const response = await fetch(url, {
                 ...options,
@@ -69,7 +72,8 @@ class SchwabApiClient {
     async getQuotes(symbols) {
         try {
             const symbolList = Array.isArray(symbols) ? symbols.join(',') : symbols;
-            const response = await this.makeRequest(`/marketdata/quotes?symbols=${symbolList}`, 'marketData');
+            // Use correct Schwab API endpoint format
+            const response = await this.makeRequest(`/marketdata/v1/quotes?symbols=${symbolList}`, 'marketData');
             return response;
         } catch (error) {
             console.error(`Failed to get quotes for ${symbols}:`, error);
