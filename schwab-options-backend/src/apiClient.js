@@ -72,8 +72,8 @@ class SchwabApiClient {
     async getQuotes(symbols) {
         try {
             const symbolList = Array.isArray(symbols) ? symbols.join(',') : symbols;
-            // Try the trader API endpoint structure instead
-            const response = await this.makeRequest(`/trader/v1/marketdata/quotes?symbols=${symbolList}`, 'marketData');
+            // Use correct Market Data base URL per Schwab support
+            const response = await this.makeRequest(`/marketdata/v1/quotes?symbols=${symbolList}`, 'marketData');
             return response;
         } catch (error) {
             console.error(`Failed to get quotes for ${symbols}:`, error);
@@ -93,7 +93,7 @@ class SchwabApiClient {
                 range: 'ALL'
             });
 
-            const response = await this.makeRequest(`/marketdata/chains?${queryParams}`, 'marketData');
+            const response = await this.makeRequest(`/marketdata/v1/chains?${queryParams}`, 'marketData');
             return response;
         } catch (error) {
             console.error(`Failed to get option chain for ${symbol}:`, error);
@@ -112,7 +112,7 @@ class SchwabApiClient {
                 queryParams.append('date', date);
             }
 
-            const response = await this.makeRequest(`/marketdata/markets?${queryParams}`, 'marketData');
+            const response = await this.makeRequest(`/marketdata/v1/markets?${queryParams}`, 'marketData');
             return response;
         } catch (error) {
             console.error(`Failed to get market hours:`, error);

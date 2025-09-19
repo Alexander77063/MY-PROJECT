@@ -156,8 +156,8 @@ class SchwabDualAuth {
     async getAuthHeaders(service) {
         const token = await this.ensureValidToken(service);
         return {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
+            'Authorization': `Bearer ${token}`
+            // Remove Content-Type for GET requests per Schwab support
         };
     }
 
