@@ -38,7 +38,7 @@ class SchwabApiClient {
     // Get user accounts (requires trading authentication)
     async getAccounts() {
         try {
-            const response = await this.makeRequest('/accounts', 'trading');
+            const response = await this.makeRequest('/trader/v1/accounts', 'trading');
             return response;
         } catch (error) {
             console.error('Failed to get accounts:', error);
@@ -49,7 +49,7 @@ class SchwabApiClient {
     // Get account details (requires trading authentication)
     async getAccount(accountNumber) {
         try {
-            const response = await this.makeRequest(`/accounts/${accountNumber}`, 'trading');
+            const response = await this.makeRequest(`/trader/v1/accounts/${accountNumber}`, 'trading');
             return response;
         } catch (error) {
             console.error(`Failed to get account ${accountNumber}:`, error);
@@ -60,7 +60,7 @@ class SchwabApiClient {
     // Get positions for an account (requires trading authentication)
     async getPositions(accountNumber) {
         try {
-            const response = await this.makeRequest(`/accounts/${accountNumber}/positions`, 'trading');
+            const response = await this.makeRequest(`/trader/v1/accounts/${accountNumber}/positions`, 'trading');
             return response;
         } catch (error) {
             console.error(`Failed to get positions for ${accountNumber}:`, error);
@@ -132,7 +132,7 @@ class SchwabApiClient {
                 needExtendedHoursData: params.needExtendedHoursData || false
             });
 
-            const response = await this.makeRequest(`/marketdata/pricehistory?${queryParams}`, 'marketData');
+            const response = await this.makeRequest(`/marketdata/v1/pricehistory?${queryParams}`, 'marketData');
             return response;
         } catch (error) {
             console.error(`Failed to get price history for ${symbol}:`, error);
@@ -143,7 +143,7 @@ class SchwabApiClient {
     // Place order (requires trading authentication)
     async placeOrder(accountNumber, order) {
         try {
-            const response = await this.makeRequest(`/accounts/${accountNumber}/orders`, 'trading', {
+            const response = await this.makeRequest(`/trader/v1/accounts/${accountNumber}/orders`, 'trading', {
                 method: 'POST',
                 body: JSON.stringify(order)
             });
@@ -163,7 +163,7 @@ class SchwabApiClient {
             if (params.toEnteredTime) queryParams.append('toEnteredTime', params.toEnteredTime);
             if (params.status) queryParams.append('status', params.status);
 
-            const endpoint = `/accounts/${accountNumber}/orders${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+            const endpoint = `/trader/v1/accounts/${accountNumber}/orders${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
             const response = await this.makeRequest(endpoint, 'trading');
             return response;
         } catch (error) {
