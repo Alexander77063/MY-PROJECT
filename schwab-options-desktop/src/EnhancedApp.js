@@ -10,7 +10,6 @@ function EnhancedApp() {
   const [marketData, setMarketData] = useState({});
   const [loading, setLoading] = useState(false);
   const [selectedSymbol, setSelectedSymbol] = useState('AAPL');
-  const [optionsData, setOptionsData] = useState(null);
   const [error, setError] = useState('');
   const [watchlist, setWatchlist] = useState([]);
   const [selectedAccount, setSelectedAccount] = useState(null);
@@ -23,7 +22,7 @@ function EnhancedApp() {
     orderType: 'MARKET',
     instruction: 'BUY'
   });
-  const [activeTab, setActiveTab] = useState('scanner');
+  const [activeTab, setActiveTab] = useState('options');
 
   const fileInputRef = useRef(null);
   const liveDataInterval = useRef(null);
@@ -252,18 +251,6 @@ function EnhancedApp() {
     }
   };
 
-  const fetchOptionsChain = async (symbol) => {
-    setLoading(true);
-    setError('');
-    try {
-      const response = await axios.get(`${API_BASE_URL}/api/options/${symbol}`);
-      setOptionsData(response.data);
-    } catch (error) {
-      setError(`Failed to fetch options data for ${symbol}`);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const placeOrder = async () => {
     if (!selectedAccount || !orderForm.symbol) {
@@ -381,20 +368,20 @@ function EnhancedApp() {
           <>
             {/* Tab Navigation */}
             <div className="tab-nav">
-              {['scanner', 'quotes', 'watchlist', 'positions', 'trading', 'options'].map(tab => (
+              {['options', 'quotes', 'watchlist', 'positions', 'trading'].map(tab => (
                 <button
                   key={tab}
                   className={`tab-btn ${activeTab === tab ? 'active' : ''}`}
                   onClick={() => setActiveTab(tab)}
                 >
-                  {tab === 'scanner' ? 'Options Scanner' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+                  {tab === 'options' ? 'Options Scanner' : tab.charAt(0).toUpperCase() + tab.slice(1)}
                 </button>
               ))}
             </div>
 
             {/* Tab Content */}
-            {activeTab === 'scanner' && (
-              <OptionsScanner apiUrl={API_BASE_URL} />
+            {activeTab === 'options' && (
+              <OptionsScanner apiUrl={API_BASE_URL} authStatus={authStatus} />
             )}
 
             {activeTab === 'quotes' && (
@@ -664,36 +651,6 @@ function EnhancedApp() {
               </div>
             )}
 
-            {activeTab === 'options' && (
-              <div className="tab-content">
-                <div className="card">
-                  <h3>Options Chain</h3>
-                  <div className="symbol-input">
-                    <input
-                      type="text"
-                      className="input"
-                      value={selectedSymbol}
-                      onChange={(e) => setSelectedSymbol(e.target.value.toUpperCase())}
-                      placeholder="Enter symbol"
-                    />
-                    <button
-                      className="btn btn-primary"
-                      onClick={() => fetchOptionsChain(selectedSymbol)}
-                      disabled={loading}
-                    >
-                      Get Options
-                    </button>
-                  </div>
-
-                  {optionsData && (
-                    <div className="options-data">
-                      <p>Options data loaded for {selectedSymbol}</p>
-                      <pre>{JSON.stringify(optionsData, null, 2).substring(0, 1000)}...</pre>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
 
             {loading && (
               <div className="loading-overlay">
