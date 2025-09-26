@@ -69,7 +69,7 @@ app.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
-    deployment: 'clean-v3',
+    deployment: 'auth-fix-v4',
     message: 'Backend is working with simplified CORS'
   });
 });
