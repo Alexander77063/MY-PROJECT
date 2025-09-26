@@ -99,7 +99,98 @@ app.get('/auth/callback', async (req, res) => {
     // Save tokens
     fs.writeFileSync(TOKEN_FILE, JSON.stringify(tokens, null, 2));
 
-    res.json({ success: true, message: 'Authentication successful' });
+    // Return HTML success page that auto-closes and signals completion
+    res.send(`
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Authentication Successful - Schwab Options Desktop</title>
+        <style>
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: white;
+          }
+          .container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 3rem;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+          }
+          .success-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+          }
+          .countdown {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #00d4aa;
+            margin-top: 1rem;
+          }
+          .details {
+            margin-top: 2rem;
+            font-size: 0.9rem;
+            opacity: 0.8;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="success-icon">✅</div>
+          <h1>Authentication Successful!</h1>
+          <p>Your Schwab Options Desktop has been authenticated successfully.</p>
+          <p>You can now access live market data and use the professional options scanner.</p>
+          <div class="countdown" id="countdown">Returning to desktop in 3 seconds...</div>
+          <div class="details">
+            <p><strong>Connected:</strong> Schwab Market Data API</p>
+            <p><strong>Token expires in:</strong> ${Math.floor((tokens.expires_in || 1800) / 60)} minutes</p>
+          </div>
+        </div>
+
+        <script>
+          let countdown = 3;
+          const countdownElement = document.getElementById('countdown');
+
+          const timer = setInterval(() => {
+            countdown--;
+            if (countdown > 0) {
+              countdownElement.textContent = 'Returning to desktop in ' + countdown + ' seconds...';
+            } else {
+              countdownElement.textContent = 'Returning to your desktop app...';
+              clearInterval(timer);
+
+              // Try to close the window/tab
+              try {
+                window.close();
+              } catch (e) {
+                // If window.close() fails, show manual instruction
+                countdownElement.innerHTML = '<strong>You can now close this tab and return to your desktop app!</strong>';
+              }
+            }
+          }, 1000);
+
+          // Also try to signal the parent window if opened via desktop app
+          if (window.opener) {
+            window.opener.postMessage({
+              type: 'SCHWAB_AUTH_SUCCESS',
+              message: 'Authentication completed successfully'
+            }, '*');
+          }
+        </script>
+      </body>
+      </html>
+    `);
   } catch (error) {
     console.error('Token exchange error:', error.response?.data || error.message);
     res.status(500).json({
