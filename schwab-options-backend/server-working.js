@@ -180,6 +180,11 @@ app.get('/auth/callback', async (req, res) => {
             }
           }, 1000);
 
+          // Redirect back to the desktop app after a short delay
+          setTimeout(() => {
+            window.location.href = 'http://localhost:3055';
+          }, 2000);
+
           // Also try to signal the parent window if opened via desktop app
           if (window.opener) {
             window.opener.postMessage({
