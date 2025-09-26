@@ -5,8 +5,9 @@ import './OptionsScanner.css';
 const API_BASE_URL = 'https://my-project-ityv.onrender.com';
 
 const POPULAR_SYMBOLS = [
-  'SPY', 'QQQ', 'AAPL', 'TSLA', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'META', 'NFLX',
+  'SPY', 'QQQ', 'IWM', 'DIA', 'AAPL', 'TSLA', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'META', 'NFLX',
   'AMD', 'BABA', 'DIS', 'UBER', 'PYPL', 'ZOOM', 'CRM', 'SHOP', 'SQ', 'ROKU',
+  'XLF', 'XLE', 'GLD', 'JPM', 'JNJ', 'XOM', 'UNH', 'BA',
   'PELOTON', 'GME', 'AMC', 'BB'
 ];
 
@@ -34,13 +35,13 @@ function OptionsScanner({ authStatus }) {
   // Scanner Configuration
   const [selectedStrategy, setSelectedStrategy] = useState('HIGH_MOMENTUM');
   const [riskSettings, setRiskSettings] = useState({
-    maxOptionPrice: 500,
+    maxOptionPrice: 300,
     maxRiskPerTrade: 1000,
     portfolioRiskLimit: 5000,
-    minVolume: 500,
+    minVolume: 250,
     maxSpreadPercent: 10,
     minDaysToExpiry: 7,
-    maxDaysToExpiry: 45
+    maxDaysToExpiry: 60
   });
 
   // Live Data State
@@ -375,7 +376,7 @@ function OptionsScanner({ authStatus }) {
         </div>
 
         <div className="control-section">
-          <label>Max Option Price:</label>
+          <label>Max Option Price ($):</label>
           <input
             type="number"
             value={riskSettings.maxOptionPrice}
