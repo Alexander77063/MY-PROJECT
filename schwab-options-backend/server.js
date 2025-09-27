@@ -133,7 +133,7 @@ app.get('/auth/callback', async (req, res) => {
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Authentication Successful - Schwab Options Desktop</title>
-        <meta http-equiv="refresh" content="2;url=http://localhost:3055">
+        <meta http-equiv="refresh" content="2;url=${process.env.FRONTEND_URL || 'http://localhost:3055'}">
         <style>
           body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -473,7 +473,7 @@ app.get('/test/success-redirect', (req, res) => {
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Authentication Successful - Schwab Options Desktop</title>
-      <meta http-equiv="refresh" content="2;url=http://localhost:3055">
+      <meta http-equiv="refresh" content="2;url=${process.env.FRONTEND_URL || 'http://localhost:3055'}">
       <style>
         body {
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
