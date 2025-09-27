@@ -125,7 +125,7 @@ app.get('/auth/callback', async (req, res) => {
       console.error('Error saving tokens:', error);
     }
 
-    // Return HTML success page that auto-closes and signals completion
+    // Return HTML success page with immediate redirect
     res.send(`
       <!DOCTYPE html>
       <html lang="en">
@@ -133,6 +133,7 @@ app.get('/auth/callback', async (req, res) => {
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Authentication Successful - Schwab Options Desktop</title>
+        <meta http-equiv="refresh" content="2;url=http://localhost:3055">
         <style>
           body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -183,7 +184,7 @@ app.get('/auth/callback', async (req, res) => {
             <li>Place trading orders</li>
             <li>Import your watchlist</li>
           </ul>
-          <div class="countdown" id="countdown">Closing in 5 seconds...</div>
+          <div class="countdown" id="countdown">Redirecting in 2 seconds...</div>
           <div class="details">
             <p><strong>Connected:</strong> Schwab Market Data API</p>
             <p><strong>Token expires in:</strong> ${Math.floor((tokens.expires_in || 1800) / 60)} minutes</p>
@@ -191,31 +192,18 @@ app.get('/auth/callback', async (req, res) => {
         </div>
 
         <script>
-          let countdown = 5;
+          let countdown = 2;
           const countdownElement = document.getElementById('countdown');
 
           const timer = setInterval(() => {
-            countdown--;
             if (countdown > 0) {
-              countdownElement.textContent = 'Closing in ' + countdown + ' seconds...';
+              countdownElement.textContent = 'Redirecting in ' + countdown + ' seconds...';
+              countdown--;
             } else {
               countdownElement.textContent = 'Returning to your desktop app...';
               clearInterval(timer);
-
-              // Try to close the window/tab
-              try {
-                window.close();
-              } catch (e) {
-                // If window.close() fails, show manual instruction
-                countdownElement.innerHTML = '<strong>You can now close this tab and return to your desktop app!</strong>';
-              }
             }
           }, 1000);
-
-          // Redirect back to the desktop app after a short delay
-          setTimeout(() => {
-            window.location.href = 'http://localhost:3055';
-          }, 2000);
 
           // Also try to signal the parent window if opened via desktop app
           if (window.opener) {
@@ -427,6 +415,158 @@ app.get('/api/options/:symbol', ensureAuthenticated, async (req, res) => {
       details: error.response?.data || error.message
     });
   }
+});
+
+// Place order endpoint
+app.post('/api/accounts/:accountNumber/orders', ensureAuthenticated, async (req, res) => {
+  const { accountNumber } = req.params;
+  const orderData = req.body;
+
+  console.log('Placing order for account:', accountNumber);
+  console.log('Order data:', JSON.stringify(orderData, null, 2));
+
+  try {
+    const response = await axios.post(
+      `${process.env.SCHWAB_BASE_URL}/trader/v1/accounts/${accountNumber}/orders`,
+      orderData,
+      {
+        headers: {
+          'Authorization': `Bearer ${req.accessToken}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    // Schwab API typically returns 201 for successful order placement
+    // The response body may be empty for successful orders
+    res.status(201).json({
+      success: true,
+      message: 'Order placed successfully',
+      orderId: response.headers.location ? response.headers.location.split('/').pop() : null
+    });
+  } catch (error) {
+    console.error('Error placing order:', error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      error: 'Failed to place order',
+      message: error.response?.data?.message || error.message,
+      details: error.response?.data || error.message
+    });
+  }
+});
+
+// Test redirect endpoint (bypass token exchange, test redirect only)
+app.get('/test/success-redirect', (req, res) => {
+  console.log('🧪 Testing success page redirect functionality');
+
+  // Mock token data for display purposes only
+  const mockTokens = {
+    expires_in: 1800, // 30 minutes
+    access_token: 'test_token_for_display'
+  };
+
+  // Return the same HTML success page that would be shown after real authentication
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Authentication Successful - Schwab Options Desktop</title>
+      <meta http-equiv="refresh" content="2;url=http://localhost:3055">
+      <style>
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          margin: 0;
+          padding: 0;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          min-height: 100vh;
+          color: white;
+        }
+        .container {
+          text-align: center;
+          background: rgba(255, 255, 255, 0.1);
+          padding: 3rem;
+          border-radius: 20px;
+          backdrop-filter: blur(10px);
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+          max-width: 500px;
+        }
+        .success-icon {
+          font-size: 4rem;
+          margin-bottom: 1rem;
+        }
+        .countdown {
+          font-size: 1.5rem;
+          font-weight: bold;
+          color: #00d4aa;
+          margin-top: 1rem;
+        }
+        .details {
+          margin-top: 2rem;
+          font-size: 0.9rem;
+          opacity: 0.8;
+        }
+        .test-badge {
+          background: #e74c3c;
+          color: white;
+          padding: 0.5rem 1rem;
+          border-radius: 20px;
+          font-size: 0.8rem;
+          margin-bottom: 1rem;
+          display: inline-block;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="test-badge">🧪 TEST MODE</div>
+        <div class="success-icon">✅</div>
+        <h1>Authentication Successful!</h1>
+        <p>Your Schwab Options Desktop has been authenticated successfully.</p>
+        <p>You can now:</p>
+        <ul style="text-align: left; display: inline-block;">
+          <li>Access live market data</li>
+          <li>View account positions</li>
+          <li>Place trading orders</li>
+          <li>Import your watchlist</li>
+        </ul>
+        <div class="countdown" id="countdown">Redirecting in 2 seconds...</div>
+        <div class="details">
+          <p><strong>Connected:</strong> Schwab Market Data API</p>
+          <p><strong>Token expires in:</strong> ${Math.floor((mockTokens.expires_in || 1800) / 60)} minutes</p>
+          <p><strong>Test Mode:</strong> This is a redirect functionality test</p>
+        </div>
+      </div>
+
+      <script>
+        let countdown = 2;
+        const countdownElement = document.getElementById('countdown');
+
+        const timer = setInterval(() => {
+          if (countdown > 0) {
+            countdownElement.textContent = 'Redirecting in ' + countdown + ' seconds...';
+            countdown--;
+          } else {
+            countdownElement.textContent = 'Returning to your desktop app...';
+            clearInterval(timer);
+          }
+        }, 1000);
+
+        // Also try to signal the parent window if opened via desktop app
+        if (window.opener) {
+          window.opener.postMessage({
+            type: 'SCHWAB_AUTH_SUCCESS',
+            message: 'Authentication completed successfully (TEST MODE)'
+          }, '*');
+        }
+      </script>
+    </body>
+    </html>
+  `);
 });
 
 // 404 handler
